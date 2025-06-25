@@ -43,9 +43,7 @@ pair_coeff	* * Param_ML_pot.txt K
 
 compute          3 all rdf 100 1 1
 fix              3 all ave/time 1 500 500 c_3[*] file tmp.rdf mode vector
-#compute          2 all ackland/atom
 compute          2 all cluster/atom 5.0 
-#compute          1 all fragment/atom
 compute          msd all msd com yes
 fix              4 all vector 1 c_msd[4]
 variable         fitslope equal slope(f_4)/6/(dt)
