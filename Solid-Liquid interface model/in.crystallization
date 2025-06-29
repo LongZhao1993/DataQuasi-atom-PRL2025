@@ -1,0 +1,88 @@
+#Crystallization for solid-liquid interface model#
+#shell           mkdir cfg
+variable        i  loop  10
+variable        p equal 150000
+variable        t equal 50+($i-1)*50
+variable        temp_factor equal 0.01*${t}
+shell           mkdir dump_$i
+units		        metal
+boundary	      p p p
+atom_style      atomic
+lattice         fcc 5.112138 origin 0.1 0.1 0.1 orient x 1 -1 0 orient y 1 1 2 orient z -1 -1 1 
+region          box block 0 6 0 6 0 16 units lattice
+create_box      2 box
+
+region          solid block 0 INF 0 INF 6 10 units lattice 
+#move 0.5 0.5 0.5
+create_atoms    1 region solid
+
+region          liquid block  0 INF 0 INF 6 10 side out  
+# side out
+#region          solid block 0 8 0 6 6.1 12
+create_atoms    2 region liquid
+
+group           liquid region liquid
+group           solid region solid
+
+mass            1 39.10
+mass            2 39.10
+
+
+timestep	0.001
+thermo		100
+
+pair_style      ml/energy 1 -6.124 ${temp_factor} 
+pair_coeff      * * Param_ML_pot.txt K K
+
+neighbor	2.0 bin
+neigh_modify	every 5 delay 0 check yes
+
+thermo_style	custom step temp pe etotal lx ly lz pxx pyy pzz
+#min_style       sd
+#minimize        1.0e-4 1.0e-4 1000 1000
+reset_timestep  0
+
+velocity        all  create $t 4881299 dist gaussian
+fix             1 all npt temp $t $t 0.1 aniso $p $p 0.1 drag 0.2
+fix             2 all box/relax aniso $p
+compute         msd all msd com yes
+
+thermo          100
+thermo_style    custom step temp ke pe enthalpy etotal pxx pyy pzz press lx ly lz vol c_msd[4]
+dump            1 all custom 1000 dump_$i/dump.* id type x y z
+dump_modify     1 sort id
+run             10000
+
+unfix            1
+unfix            2
+
+pair_style      ml/energy 1 -6.124 1.2
+pair_coeff      * * Param_ML_pot.txt K K
+
+fix              1 liquid nvt temp 1200 1200 0.1 drag 0.2
+velocity         solid set 0.0 0.0 0.0 
+fix              2 solid setforce 0.0 0.0 0.0
+fix              3 solid nve/noforce 
+
+run              10000
+
+unfix            1
+unfix            2
+unfix            3
+
+pair_style      ml/energy 1 -6.124 ${temp_factor}
+pair_coeff      * * Param_ML_pot.txt K K
+
+velocity         all set 0.0 0.0 0.0 
+fix              1 all npt temp $t $t 0.1 aniso $p $p 0.1 drag 0.2
+fix              2 all box/relax aniso $p
+
+run              50000
+
+clear
+
+next           i
+
+jump           in.relax
+
+
