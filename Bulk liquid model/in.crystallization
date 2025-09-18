@@ -34,7 +34,7 @@ velocity         all  create 650 ${rand_seed} dist gaussian
 #fix              1 all nvt temp 650 650 0.1  drag 0.2
 fix              1 all npt temp  650 650 0.1 aniso $p $p 0.1 drag 0.2
 
-run              10000
+run              100000
 
 reset_timestep   0
 unfix            1
