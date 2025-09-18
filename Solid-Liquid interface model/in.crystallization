@@ -2,8 +2,9 @@
 #shell           mkdir cfg
 variable        i  loop  10
 variable        p equal 150000
-variable        t equal 50+($i-1)*50
+variable        t equal 150
 variable        temp_factor equal 0.01*${t}
+variable        rand_seed equal 4981299+($i-1)*50000
 shell           mkdir dump_$i
 units		        metal
 boundary	      p p p
@@ -42,7 +43,7 @@ thermo_style	custom step temp pe etotal lx ly lz pxx pyy pzz
 #minimize        1.0e-4 1.0e-4 1000 1000
 reset_timestep  0
 
-velocity        all  create $t 4881299 dist gaussian
+velocity        all  create $t ${rand_seed} dist gaussian
 fix             1 all npt temp $t $t 0.1 aniso $p $p 0.1 drag 0.2
 fix             2 all box/relax aniso $p
 compute         msd all msd com yes
@@ -51,7 +52,7 @@ thermo          100
 thermo_style    custom step temp ke pe enthalpy etotal pxx pyy pzz press lx ly lz vol c_msd[4]
 dump            1 all custom 1000 dump_$i/dump.* id type x y z
 dump_modify     1 sort id
-run             10000
+run             100000
 
 unfix            1
 unfix            2
@@ -64,7 +65,7 @@ velocity         solid set 0.0 0.0 0.0
 fix              2 solid setforce 0.0 0.0 0.0
 fix              3 solid nve/noforce 
 
-run              10000
+run              100000
 
 unfix            1
 unfix            2
@@ -77,7 +78,7 @@ velocity         all set 0.0 0.0 0.0
 fix              1 all npt temp $t $t 0.1 aniso $p $p 0.1 drag 0.2
 fix              2 all box/relax aniso $p
 
-run              50000
+run              100000
 
 clear
 
